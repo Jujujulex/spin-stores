@@ -64,6 +64,7 @@ model Message {
   senderId  String
   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
   isRead    Boolean  @default(false)
+  attachments String[]
   createdAt DateTime @default(now())
 }
 
