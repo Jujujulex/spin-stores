@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
+import ProfileForm from '@/components/settings/ProfileForm';
 
 export default function ProfileSettingsPage() {
     const { isAuthenticated, user } = useAuth();
