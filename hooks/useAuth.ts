@@ -1,104 +1,108 @@
 'use client';
 
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
-import { BrowserProvider } from 'ethers';
+import { useState, useEffect } from 'react';
+import { useAppKitAccount } from '@reown/appkit/react';
+import { useDisconnect } from 'wagmi';
 import { SiweMessage } from 'siwe';
-import { useEffect, useState } from 'react';
+
+interface User {
+    id: string;
+    walletAddress: string;
+    username?: string;
+    avatar?: string;
+}
 
 export function useAuth() {
     const { address, isConnected } = useAppKitAccount();
-    const { walletProvider } = useAppKitProvider('eip155');
+    const { disconnect } = useDisconnect();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         checkAuth();
-    }, [address, isConnected]);
+    }, [address]);
 
     const checkAuth = async () => {
-        if (!address || !isConnected) {
-            setIsAuthenticated(false);
-            return;
-        }
-
         try {
-            const response = await fetch('/api/auth/me');
-            if (response.ok) {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
                 setIsAuthenticated(true);
+                setUser(data.user);
             } else {
                 setIsAuthenticated(false);
+                setUser(null);
             }
         } catch (error) {
             console.error('Auth check failed:', error);
             setIsAuthenticated(false);
+            setUser(null);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const login = async () => {
-        if (!address || !walletProvider) {
-            throw new Error('Wallet not connected');
-        }
-
-        setIsLoading(true);
         try {
-            // Get nonce from server
-            const nonceResponse = await fetch('/api/auth/nonce');
-            const { nonce } = await nonceResponse.json();
+            if (!address) throw new Error('No wallet connected');
 
-            // Create SIWE message
+            const nonceRes = await fetch('/api/auth/nonce');
+            const { nonce } = await nonceRes.json();
+
             const message = new SiweMessage({
                 domain: window.location.host,
                 address,
-                statement: 'Sign in to Spin Stores',
+                statement: 'Sign in with Ethereum to the app.',
                 uri: window.location.origin,
                 version: '1',
                 chainId: 1,
                 nonce,
             });
 
-            const messageToSign = message.prepareMessage();
-
-            // Sign message
-            const provider = new BrowserProvider(walletProvider);
-            const signer = await provider.getSigner();
-            const signature = await signer.signMessage(messageToSign);
-
-            // Verify signature and create session
-            const verifyResponse = await fetch('/api/auth/verify', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: messageToSign, signature }),
+            const signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [message.prepareMessage(), address],
             });
 
-            if (!verifyResponse.ok) {
-                throw new Error('Authentication failed');
-            }
+            const verifyRes = await fetch('/api/auth/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message, signature }),
+            });
 
+            if (!verifyRes.ok) throw new Error('Verification failed');
+
+            const data = await verifyRes.json();
             setIsAuthenticated(true);
+            setUser(data.user);
             return true;
         } catch (error) {
             console.error('Login failed:', error);
-            throw error;
-        } finally {
-            setIsLoading(false);
+            return false;
         }
     };
 
     const logout = async () => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
+            await disconnect();
             setIsAuthenticated(false);
+            setUser(null);
         } catch (error) {
             console.error('Logout failed:', error);
         }
     };
 
     return {
-        address,
-        isConnected,
         isAuthenticated,
         isLoading,
+        user,
         login,
         logout,
+        address,
+        isConnected
     };
 }
