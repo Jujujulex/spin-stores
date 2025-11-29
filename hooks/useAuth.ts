@@ -9,6 +9,7 @@ interface User {
     id: string;
     walletAddress: string;
     username?: string;
+    bio?: string;
     avatar?: string;
 }
 
