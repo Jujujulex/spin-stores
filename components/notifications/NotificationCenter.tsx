@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 
+import NotificationList from './NotificationList';
+
 export default function NotificationCenter() {
     const { isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -61,6 +63,21 @@ export default function NotificationCenter() {
         }
     };
 
+    const markAllAsRead = async () => {
+        try {
+            await fetch('/api/notifications', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ markAllRead: true }),
+            });
+
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+        }
+    };
+
     if (!isAuthenticated) return null;
 
     return (
@@ -81,54 +98,12 @@ export default function NotificationCenter() {
 
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
-                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                        {unreadCount > 0 && (
-                            <button
-                                onClick={() => {/* TODO: Implement mark all read */ }}
-                                className="text-xs text-primary-600 hover:underline"
-                            >
-                                Mark all read
-                            </button>
-                        )}
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                            <div className="p-4 text-center text-gray-500 text-sm">
-                                No notifications
-                            </div>
-                        ) : (
-                            notifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''
-                                        }`}
-                                    onClick={() => !notification.read && markAsRead(notification.id)}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                            {notification.title}
-                                        </h4>
-                                        <span className="text-xs text-gray-500">
-                                            {formatRelativeTime(notification.createdAt)}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                        {notification.message}
-                                    </p>
-                                    {notification.link && (
-                                        <Link
-                                            href={notification.link}
-                                            className="text-xs text-primary-600 hover:underline mt-2 block"
-                                            onClick={() => setIsOpen(false)}
-                                        >
-                                            View Details
-                                        </Link>
-                                    )}
-                                </div>
-                            ))
-                        )}
-                    </div>
+                    <NotificationList
+                        notifications={notifications}
+                        onMarkAsRead={markAsRead}
+                        onMarkAllAsRead={markAllAsRead}
+                        onClose={() => setIsOpen(false)}
+                    />
                 </div>
             )}
         </div>
