@@ -1,11 +1,93 @@
-```
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  walletAddress String    @unique
+  username      String?   @unique
+  bio           String?
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  products      Product[]
+  buyingOrders  Order[]   @relation("BuyerOrders")
+  sellingOrders Order[]   @relation("SellerOrders")
+  messagesSent  Message[] @relation("SentMessages")
+  notifications Notification[]
+  transactions  Transaction[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Float
+  images      String[]
+  category    String
+  condition   String
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  buyerId       String
+  buyer         User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId      String
+  seller        User     @relation("SellerOrders", fields: [sellerId], references: [id])
+  status        String   @default("PENDING") // PENDING, PAID, SHIPPED, DELIVERED, COMPLETED, DISPUTED, CANCELLED, REFUNDED
+  totalAmount   Float
+  escrowAddress String? // Transaction hash or ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  messages      Message[]
+  transactions  Transaction[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   // ORDER_UPDATE, MESSAGE, SYSTEM
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  hash      String   @unique
+  amount    Float
+  type      String   // DEPOSIT, RELEASE, REFUND
+  status    String   // PENDING, CONFIRMED, FAILED
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
 }
