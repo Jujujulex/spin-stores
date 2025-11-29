@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         });
 
         // Transform to conversation format
-        const conversations = orders.map(order => {
+        const conversations = orders.map((order: any) => {
             const isBuyer = order.buyerId === userId;
             const otherUser = isBuyer ? order.seller : order.buyer;
             const lastMessage = order.messages[0];

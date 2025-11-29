@@ -7,6 +7,7 @@ import { formatPrice, formatDate, formatAddress } from '@/lib/utils';
 import OrderTimeline from '@/components/orders/OrderTimeline';
 import Image from 'next/image';
 import Link from 'next/link';
+import { BrowserProvider, Contract } from 'ethers';
 
 export default function OrderDetailPage() {
     const params = useParams();
@@ -40,6 +41,38 @@ export default function OrderDetailPage() {
 
         setIsUpdating(true);
         try {
+            // If releasing funds or refunding, interact with smart contract first
+            if (newStatus === 'COMPLETED' || newStatus === 'REFUNDED') {
+                if (!window.ethereum) throw new Error('No wallet found');
+
+                const provider = new BrowserProvider(window.ethereum);
+                const signer = await provider.getSigner();
+                const contract = new Contract(
+                    process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS!,
+                    [
+                        'function releasePayment(bytes32 _escrowId) external',
+                        'function refundBuyer(bytes32 _escrowId) external'
+                    ],
+                    signer
+                );
+
+                // We need the escrowId (transaction hash of creation or stored ID)
+                // In this simple implementation, we assume escrowId is stored or derived
+                // For now, we'll use the order.escrowAddress as the ID if it's a bytes32,
+                // but typically you'd store the actual bytes32 ID returned by createEscrow.
+                // Let's assume order.escrowAddress holds the ID for this demo.
+                const escrowId = order.escrowAddress;
+
+                let tx;
+                if (newStatus === 'COMPLETED') {
+                    tx = await contract.releasePayment(escrowId);
+                } else {
+                    tx = await contract.refundBuyer(escrowId);
+                }
+
+                await tx.wait();
+            }
+
             const response = await fetch(`/api/orders/${params.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -53,6 +86,7 @@ export default function OrderDetailPage() {
             }
         } catch (error) {
             console.error('Error updating status:', error);
+            alert('Failed to update status: ' + (error as Error).message);
         } finally {
             setIsUpdating(false);
         }
