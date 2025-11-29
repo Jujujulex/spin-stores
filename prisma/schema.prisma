@@ -22,6 +22,8 @@ model User {
   messagesSent  Message[] @relation("SentMessages")
   notifications Notification[]
   transactions  Transaction[]
+  writtenReviews  Review[] @relation("WrittenReviews")
+  receivedReviews Review[] @relation("ReceivedReviews")
 }
 
 model Product {
@@ -92,5 +94,18 @@ model Transaction {
   user      User     @relation(fields: [userId], references: [id])
   orderId   String?
   order     Order?   @relation(fields: [orderId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?
+  authorId  String
+  author    User     @relation("WrittenReviews", fields: [authorId], references: [id])
+  targetId  String
+  target    User     @relation("ReceivedReviews", fields: [targetId], references: [id])
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
   createdAt DateTime @default(now())
 }
