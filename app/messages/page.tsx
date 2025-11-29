@@ -1,153 +1,139 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { pusherClient } from '@/lib/pusher';
+import { formatRelativeTime, formatAddress } from '@/lib/utils';
+import Image from 'next/image';
 
 export default function MessagesPage() {
-    const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+    const { isAuthenticated, user } = useAuth();
+    const [conversations, setConversations] = useState<any[]>([]);
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Mock data - in production, fetch from API
-    const conversations = [
-        {
-            id: '1',
-            user: { name: 'Alice', avatar: '👤' },
-            lastMessage: 'Is the item still available?',
-            timestamp: '2 hours ago',
-            unread: 2,
-        },
-        {
-            id: '2',
-            user: { name: 'Bob', avatar: '👤' },
-            lastMessage: 'When can you ship it?',
-            timestamp: '1 day ago',
-            unread: 0,
-        },
-    ];
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchConversations();
 
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-                    Messages
-                </h1>
+            // Subscribe to user's private channel
+            if (user?.id) {
+                const channel = pusherClient.subscribe(`private-user-${user.id}`);
+                channel.bind('new-message', (data: any) => {
+                    handleNewMessage(data);
+                });
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                    <div className="grid grid-cols-1 md:grid-cols-3 h-[600px]">
-                        {/* Conversations List */}
-                        <div className="border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-                            <div className="p-4">
-                                <input
-                                    type="text"
-                                    placeholder="Search messages..."
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                                />
-                            </div>
+                return () => {
+                    pusherClient.unsubscribe(`private-user-${user.id}`);
+                };
+            }
+        }
+    }, [isAuthenticated, user?.id]);
 
-                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {conversations.map((conv) => (
-                                    <button
-                                        key={conv.id}
-                                        onClick={() => setSelectedConversation(conv.id)}
-                                        className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${selectedConversation === conv.id ? 'bg-primary-50 dark:bg-primary-900' : ''
-                                            }`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className="text-2xl">{conv.user.avatar}</div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span className="font-semibold text-sm truncate">
-                                                        {conv.user.name}
-                                                    </span>
-                                                    {conv.unread > 0 && (
-                                                        <span className="bg-primary-600 text-white text-xs rounded-full px-2 py-0.5">
-                                                            {conv.unread}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                                                    {conv.lastMessage}
-                                                </p>
-                                                <p className="text-xs text-gray-500 mt-1">{conv.timestamp}</p>
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+    useEffect(() => {
+        if (selectedOrderId) {
+            fetchMessages(selectedOrderId);
+        }
+    }, [selectedOrderId]);
 
-                        {/* Chat Area */}
-                        <div className="md:col-span-2 flex flex-col">
-                            {selectedConversation ? (
-                                <>
-                                    {/* Chat Header */}
-                                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-2xl">👤</div>
-                                            <div>
-                                                <h3 className="font-semibold">
-                                                    {conversations.find((c) => c.id === selectedConversation)?.user.name}
-                                                </h3>
-                                                <p className="text-sm text-gray-500">Active now</p>
-                                            </div>
-                                        </div>
-                                    </div>
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
-                                    {/* Messages */}
-                                    <div className="flex-1 p-4 overflow-y-auto">
-                                        <div className="space-y-4">
-                                            <div className="flex justify-start">
-                                                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 max-w-xs">
-                                                    <p className="text-sm">Is the item still available?</p>
-                                                    <span className="text-xs text-gray-500 mt-1 block">10:30 AM</span>
-                                                </div>
-                                            </div>
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
-                                            <div className="flex justify-end">
-                                                <div className="bg-primary-600 text-white rounded-lg p-3 max-w-xs">
-                                                    <p className="text-sm">Yes, it's still available!</p>
-                                                    <span className="text-xs text-primary-200 mt-1 block">10:32 AM</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+    const fetchConversations = async () => {
+        try {
+            const response = await fetch('/api/conversations');
+            if (response.ok) {
+                const data = await response.json();
+                setConversations(data);
+            }
+        } catch (error) {
+            console.error('Error fetching conversations:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-                                    {/* Message Input */}
-                                    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Type a message..."
-                                                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                                            />
-                                            <button className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors">
-                                                Send
-                                            </button>
-                                        </div>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex-1 flex items-center justify-center text-gray-500">
-                                    <div className="text-center">
-                                        <svg
-                                            className="mx-auto h-12 w-12 text-gray-400 mb-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                                            />
-                                        </svg>
-                                        <p>Select a conversation to start messaging</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+    const fetchMessages = async (orderId: string) => {
+        try {
+            const response = await fetch(`/api/orders/${orderId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(data.messages || []);
+            }
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
+    };
+
+    const handleNewMessage = (data: any) => {
+        const { message, orderId } = data;
+
+        // Update messages if viewing this conversation
+        if (selectedOrderId === orderId) {
+            setMessages(prev => [...prev, message]);
+        }
+
+        // Update conversation list preview
+        setConversations(prev => prev.map(conv => {
+            if (conv.id === orderId) {
+                return {
+                    ...conv,
+                    lastMessage: {
+                        content: message.content,
+                        createdAt: message.createdAt,
+                        senderId: message.senderId,
+                    }
+                };
+            }
+            return conv;
+        }));
+    };
+
+    const sendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !selectedOrderId) return;
+
+        const conversation = conversations.find(c => c.id === selectedOrderId);
+        if (!conversation) return;
+
+        try {
+            const response = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: newMessage,
+                    orderId: selectedOrderId,
+                    receiverId: conversation.otherUser.id,
+                }),
+            });
+
+            if (response.ok) {
+                setNewMessage('');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    };
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                        Messages
+                    </h2>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        Please connect your wallet to view messages
+                    </p>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
