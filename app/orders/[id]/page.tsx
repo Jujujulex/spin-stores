@@ -45,7 +45,7 @@ export default function OrderDetailPage() {
             if (newStatus === 'COMPLETED' || newStatus === 'REFUNDED') {
                 if (!window.ethereum) throw new Error('No wallet found');
 
-                const provider = new BrowserProvider(window.ethereum);
+                const provider = new BrowserProvider(window.ethereum as any);
                 const signer = await provider.getSigner();
                 const contract = new Contract(
                     process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS!,
