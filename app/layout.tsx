@@ -8,17 +8,23 @@ export const metadata: Metadata = {
     description: "Decentralized peer-to-peer marketplace with built-in escrow functionality",
 };
 
+import NotificationProvider from '@/components/providers/NotificationProvider';
+import { Toaster } from 'react-hot-toast';
+
 export default function RootLayout({
     children,
-}: Readonly<{
+}: {
     children: React.ReactNode;
-}>) {
+}) {
     return (
         <html lang="en">
-            <body>
+            <body className={inter.className}>
                 <AppKitProvider>
-                    <Header />
-                    {children}
+                    <NotificationProvider>
+                        <Header />
+                        <main>{children}</main>
+                        <Toaster position="top-right" />
+                    </NotificationProvider>
                 </AppKitProvider>
             </body>
         </html>
