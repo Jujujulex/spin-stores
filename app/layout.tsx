@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AppKitProvider } from "@/components/providers/AppKitProvider";
 
 export const metadata: Metadata = {
     title: "Spin Stores - P2P Escrow Marketplace",
@@ -14,7 +15,9 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body>
-                {children}
+                <AppKitProvider>
+                    {children}
+                </AppKitProvider>
             </body>
         </html>
     );
