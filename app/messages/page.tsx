@@ -5,10 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { pusherClient } from '@/lib/pusher';
 import { formatRelativeTime, formatAddress } from '@/lib/utils';
 import Image from 'next/image';
+import MessageSearch from '@/components/messages/MessageSearch';
 
 export default function MessagesPage() {
     const { isAuthenticated, user } = useAuth();
     const [conversations, setConversations] = useState<any[]>([]);
+    const [filteredConversations, setFilteredConversations] = useState<any[]>([]);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -32,6 +34,10 @@ export default function MessagesPage() {
             }
         }
     }, [isAuthenticated, user?.id]);
+
+    useEffect(() => {
+        setFilteredConversations(conversations);
+    }, [conversations]);
 
     useEffect(() => {
         if (selectedOrderId) {
@@ -59,6 +65,21 @@ export default function MessagesPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSearch = (query: string) => {
+        if (!query.trim()) {
+            setFilteredConversations(conversations);
+            return;
+        }
+
+        const lowerQuery = query.toLowerCase();
+        const filtered = conversations.filter(conv =>
+            conv.otherUser.username?.toLowerCase().includes(lowerQuery) ||
+            conv.product.title.toLowerCase().includes(lowerQuery) ||
+            conv.lastMessage?.content.toLowerCase().includes(lowerQuery)
+        );
+        setFilteredConversations(filtered);
     };
 
     const fetchMessages = async (orderId: string) => {
@@ -137,4 +158,64 @@ export default function MessagesPage() {
             </div>
         );
     }
+
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+                    Messages
+                </h1>
+
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden h-[600px] flex">
+                    {/* Conversations List */}
+                    <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <MessageSearch onSearch={handleSearch} />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto">
+                            {filteredConversations.length === 0 ? (
+                                <div className="p-4 text-center text-gray-500">
+                                    No conversations found
+                                </div>
+                            ) : (
+                                filteredConversations.map((conv) => (
+                                    <button
+                                        key={conv.id}
+                                        onClick={() => setSelectedOrderId(conv.id)}
+                                        className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 ${selectedOrderId === conv.id ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                                            }`}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                                                {conv.otherUser.username?.[0]?.toUpperCase() || 'U'}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="font-semibold text-sm truncate">
+                                                        {conv.otherUser.username || formatAddress(conv.otherUser.walletAddress)}
+                                                    </span>
+                                                    {conv.lastMessage && (
+                                                        <span className="text-xs text-gray-500">
+                                                            {formatRelativeTime(conv.lastMessage.createdAt)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-primary-600 dark:text-primary-400 mb-1 truncate">
+                                                    {conv.product.title}
+                                                </p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                                    {conv.lastMessage?.content || 'No messages yet'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
