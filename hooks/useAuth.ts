@@ -61,6 +61,8 @@ export function useAuth() {
                 nonce,
             });
 
+            if (!window.ethereum) throw new Error('No crypto wallet found');
+
             const signature = await window.ethereum.request({
                 method: 'personal_sign',
                 params: [message.prepareMessage(), address],
