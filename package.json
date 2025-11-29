@@ -13,9 +13,12 @@
     "@reown/appkit-adapter-wagmi": "^1.8.14",
     "@tanstack/react-query": "^5.90.11",
     "clsx": "^2.1.1",
+    "jose": "^6.1.2",
     "next": "14.2.18",
+    "next-auth": "^5.0.0-beta.30",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "siwe": "^3.0.0",
     "tailwind-merge": "^3.4.0",
     "viem": "^2.40.3",
     "wagmi": "^3.0.2"
