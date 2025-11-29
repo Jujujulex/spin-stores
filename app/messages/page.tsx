@@ -42,8 +42,27 @@ export default function MessagesPage() {
     useEffect(() => {
         if (selectedOrderId) {
             fetchMessages(selectedOrderId);
+            markAsRead(selectedOrderId);
         }
     }, [selectedOrderId]);
+
+    const markAsRead = async (orderId: string) => {
+        try {
+            await fetch(`/api/messages/${orderId}/read`, { method: 'POST' });
+            // Update local state to reflect read status
+            setConversations(prev => prev.map(conv => {
+                if (conv.id === orderId && conv.lastMessage) {
+                    return {
+                        ...conv,
+                        lastMessage: { ...conv.lastMessage, isRead: true }
+                    };
+                }
+                return conv;
+            }));
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
+    };
 
     useEffect(() => {
         scrollToBottom();
