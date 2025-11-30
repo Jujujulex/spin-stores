@@ -24,6 +24,7 @@ model User {
   transactions  Transaction[]
   writtenReviews  Review[] @relation("WrittenReviews")
   receivedReviews Review[] @relation("ReceivedReviews")
+  wishlist      Wishlist[]
 }
 
 model Product {
@@ -39,6 +40,7 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orders      Order[]
+  wishlistedBy Wishlist[]
 }
 
 model Order {
@@ -108,4 +110,15 @@ model Review {
   orderId   String   @unique
   order     Order    @relation(fields: [orderId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }
