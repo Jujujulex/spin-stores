@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
+import { uploadToS3, generateFileKey } from '@/lib/s3/upload';
+import { validateFile, ALLOWED_IMAGE_TYPES } from '@/lib/s3/validation';
 
 const JWT_SECRET = new TextEncoder().encode(
     process.env.NEXTAUTH_SECRET || 'your-secret-key-change-in-production'
@@ -25,31 +27,58 @@ export async function POST(request: NextRequest) {
         }
 
         const formData = await request.formData();
-        const file = formData.get('file') as File;
+        const files = formData.getAll('files') as File[];
 
-        if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+        if (files.length === 0) {
+            const singleFile = formData.get('file') as File;
+            if (singleFile) {
+                files.push(singleFile);
+            }
         }
 
-        // TODO: Implement actual file upload to S3 or Cloudinary
-        // For now, we'll return a mock URL
-        // const buffer = Buffer.from(await file.arrayBuffer());
-        // await uploadToS3(buffer, file.name);
+        if (files.length === 0) {
+            return NextResponse.json({ error: 'No files provided' }, { status: 400 });
+        }
 
-        console.log('Mock upload:', file.name, file.size);
+        // Validate all files first
+        for (const file of files) {
+            const validation = validateFile(file, ALLOWED_IMAGE_TYPES);
+            if (!validation.valid) {
+                return NextResponse.json({ error: validation.error }, { status: 400 });
+            }
+        }
 
-        // Simulate delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Upload all files to S3
+        const uploadResults = await Promise.all(
+            files.map(async (file) => {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                const key = generateFileKey(file.name, `users/${userId}`);
+                const result = await uploadToS3(buffer, key, file.type);
 
-        return NextResponse.json({
-            url: `https://via.placeholder.com/300?text=${encodeURIComponent(file.name)}`,
-            filename: file.name,
-            type: file.type
-        });
+                if (!result.success) {
+                    throw new Error(result.error || 'Upload failed');
+                }
+
+                return {
+                    url: result.url,
+                    key: result.key,
+                    filename: file.name,
+                    type: file.type,
+                    size: file.size,
+                };
+            })
+        );
+
+        // Return single object if only one file, otherwise return array
+        if (uploadResults.length === 1) {
+            return NextResponse.json(uploadResults[0]);
+        }
+
+        return NextResponse.json({ files: uploadResults });
     } catch (error) {
         console.error('Upload error:', error);
         return NextResponse.json(
-            { error: 'Failed to upload file' },
+            { error: error instanceof Error ? error.message : 'Failed to upload file' },
             { status: 500 }
         );
     }
