@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ConnectButton from '../wallet/ConnectButton';
+import NotificationCenter from '../notifications/NotificationCenter';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Header() {
     const pathname = usePathname();
+    const { user } = useAuth();
 
     const navItems = [
         { name: 'Browse', href: '/products' },
@@ -41,8 +44,9 @@ export default function Header() {
                         ))}
                     </nav>
 
-                    {/* Wallet Connect */}
+                    {/* Wallet Connect and Notifications */}
                     <div className="flex items-center gap-4">
+                        {user && <NotificationCenter />}
                         <ConnectButton />
                     </div>
                 </div>
@@ -56,8 +60,8 @@ export default function Header() {
                             key={item.href}
                             href={item.href}
                             className={`text-xs font-medium px-3 py-2 rounded-lg ${pathname === item.href
-                                    ? 'bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400'
-                                    : 'text-gray-700 dark:text-gray-300'
+                                ? 'bg-primary-100 text-primary-600 dark:bg-primary-900 dark:text-primary-400'
+                                : 'text-gray-700 dark:text-gray-300'
                                 }`}
                         >
                             {item.name}
