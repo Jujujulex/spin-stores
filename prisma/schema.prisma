@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -58,6 +57,7 @@ model Order {
   updatedAt     DateTime @updatedAt
   messages      Message[]
   transactions  Transaction[]
+  review        Review?
 }
 
 model Message {
