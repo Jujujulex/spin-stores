@@ -156,7 +156,7 @@ export async function PATCH(
                     userId: notifyUserId,
                     type: `ORDER_${body.status}` as any,
                     title: 'Order Update',
-                    content: `Order status changed to ${body.status}`,
+                    message: `Order status changed to ${body.status}`,
                 },
             });
         }

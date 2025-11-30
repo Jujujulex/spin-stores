@@ -112,13 +112,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (!product.isActive || product.quantity < 1) {
-            return NextResponse.json(
-                { error: 'Product not available' },
-                { status: 400 }
-            );
-        }
-
         const order = await prisma.order.create({
             data: {
                 buyerId: userId,
@@ -153,7 +146,7 @@ export async function POST(request: NextRequest) {
                 userId: product.sellerId,
                 type: 'ORDER_CREATED',
                 title: 'New Order',
-                content: `You have a new order for ${product.title}`,
+                message: `You have a new order for ${product.title}`,
             },
         });
 

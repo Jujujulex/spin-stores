@@ -28,12 +28,12 @@ export async function estimateGasCost(
 
         // For read-only estimation without a connected wallet, we might just return estimated price * typical limit
         const typicalGasLimits: Record<string, bigint> = {
-            'createEscrow': 200000n,
-            'releasePayment': 100000n,
-            'refundBuyer': 100000n,
+            'createEscrow': BigInt(200000),
+            'releasePayment': BigInt(100000),
+            'refundBuyer': BigInt(100000),
         };
 
-        const limit = typicalGasLimits[methodName] || 21000n;
+        const limit = typicalGasLimits[methodName] || BigInt(21000);
         const cost = limit * gasPrice;
 
         return formatEther(cost);

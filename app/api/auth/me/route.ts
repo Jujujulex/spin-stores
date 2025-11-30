@@ -27,10 +27,8 @@ export async function GET(request: NextRequest) {
                 id: true,
                 walletAddress: true,
                 username: true,
-                email: true,
                 bio: true,
                 avatar: true,
-                isVerified: true,
                 createdAt: true,
             },
         });

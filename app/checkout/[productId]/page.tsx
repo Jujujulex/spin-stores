@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
-import { BrowserProvider, Contract, parseEther } from 'ethers';
+import { BrowserProvider, Contract, parseEther, type Eip1193Provider } from 'ethers';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -63,7 +63,7 @@ export default function CheckoutPage() {
             const order = await orderResponse.json();
 
             // Create escrow transaction on blockchain
-            const provider = new BrowserProvider(walletProvider);
+            const provider = new BrowserProvider(walletProvider as Eip1193Provider);
             const signer = await provider.getSigner();
             const escrowContract = new Contract(ESCROW_CONTRACT_ADDRESS, ESCROW_ABI, signer);
 

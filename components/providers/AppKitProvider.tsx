@@ -11,10 +11,10 @@ import { ReactNode } from 'react';
 const queryClient = new QueryClient();
 
 // 1. Get projectId from https://cloud.reown.com
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '';
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || 'default-project-id';
 
-if (!projectId) {
-    throw new Error('Project ID is not defined');
+if (!process.env.NEXT_PUBLIC_PROJECT_ID) {
+    console.warn('NEXT_PUBLIC_PROJECT_ID is not defined. Using fallback value.');
 }
 
 // 2. Create a metadata object
@@ -26,7 +26,7 @@ const metadata = {
 };
 
 // 3. Set the networks
-const networks = [mainnet, sepolia] as const;
+const networks = [mainnet, sepolia];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
@@ -38,7 +38,7 @@ const wagmiAdapter = new WagmiAdapter({
 // 5. Create modal
 createAppKit({
     adapters: [wagmiAdapter],
-    networks,
+    networks: networks as any,
     projectId,
     metadata,
     features: {

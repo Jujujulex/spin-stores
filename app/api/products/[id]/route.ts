@@ -33,7 +33,6 @@ export async function GET(
                         username: true,
                         walletAddress: true,
                         avatar: true,
-                        isVerified: true,
                         createdAt: true,
                     },
                 },

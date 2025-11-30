@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20');
         const skip = (page - 1) * limit;
 
-        const where: any = { isActive: true };
+        const where: any = {};
 
         if (category) where.category = category;
         if (minPrice) where.price = { ...where.price, gte: parseFloat(minPrice) };
@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
                             username: true,
                             walletAddress: true,
                             avatar: true,
-                            isVerified: true,
                         },
                     },
                 },
@@ -93,7 +92,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { title, description, price, images, category, condition, quantity } = body;
+        const { title, description, price, images, category, condition } = body;
 
         // Validation
         if (!title || !description || !price || !images || !category) {
@@ -111,7 +110,6 @@ export async function POST(request: NextRequest) {
                 images,
                 category,
                 condition: condition || 'new',
-                quantity: quantity || 1,
                 sellerId: userId,
             },
             include: {

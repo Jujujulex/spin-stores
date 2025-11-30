@@ -62,15 +62,6 @@ export async function POST(request: NextRequest) {
             where: { orderId },
         });
 
-        // Note: Current schema enforces one review per orderId via @unique. 
-        // Ideally we might want two reviews per order (one from buyer, one from seller).
-        // But for now, let's assume only buyer reviews seller or we need to adjust schema.
-        // The schema `orderId String @unique` means only ONE review per order total.
-        // This is a limitation. I should probably change schema to allow composite unique key (orderId, authorId).
-        // But strictly following the plan, I will proceed. 
-        // If the schema restricts it, I'll stick to it or fix it.
-        // Let's assume for now we only support Buyer reviewing Seller.
-
         if (existingReview) {
             return NextResponse.json({ error: 'Review already exists for this order' }, { status: 400 });
         }

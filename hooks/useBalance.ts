@@ -12,18 +12,22 @@ export function useBalance() {
 
     useEffect(() => {
         if (data) {
-            const balance = parseFloat(data.formatted);
+            const balance = Number(data.value) / Math.pow(10, data.decimals);
             setIsLowBalance(balance < LOW_BALANCE_THRESHOLD);
         }
     }, [data]);
 
+    const formatBalance = (value: bigint, decimals: number) => {
+        return (Number(value) / Math.pow(10, decimals)).toFixed(4);
+    };
+
     return {
-        balance: data?.formatted || '0',
+        balance: data ? formatBalance(data.value, data.decimals) : '0',
         symbol: data?.symbol || 'ETH',
         isLoading,
         isError,
         isLowBalance,
         refetch,
-        formatted: data ? `${parseFloat(data.formatted).toFixed(4)} ${data.symbol}` : '0.0000 ETH'
+        formatted: data ? `${formatBalance(data.value, data.decimals)} ${data.symbol}` : '0.0000 ETH'
     };
 }
