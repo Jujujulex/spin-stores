@@ -12,7 +12,8 @@ model User {
   username      String?   @unique
   bio           String?
   avatar        String?
-  createdAt     DateTime  @default(now())\n  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Seller Verification fields
   isVerified       Boolean  @default(false)

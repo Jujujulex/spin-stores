@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import ProductGrid from '@/components/products/ProductGrid';
 import CategoryFilter from '@/components/products/CategoryFilter';
 import PriceRangeFilter from '@/components/products/PriceRangeFilter';
 import { ConditionFilter, SortSelect } from '@/components/products/ConditionFilter';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function ProductsPage() {
+function ProductsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [products, setProducts] = useState<any[]>([]);
@@ -123,5 +123,13 @@ export default function ProductsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">Loading...</div>}>
+            <ProductsContent />
+        </Suspense>
     );
 }

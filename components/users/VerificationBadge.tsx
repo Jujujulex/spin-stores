@@ -4,7 +4,7 @@ import { BADGE_TYPES } from '@/lib/constants/badges';
 
 interface VerificationBadgeProps {
     isVerified: boolean;
-    verificationDate?: string;
+    verificationDate?: string | Date | null;
     size?: 'sm' | 'md' | 'lg';
 }
 
@@ -17,8 +17,10 @@ export default function VerificationBadge({ isVerified, verificationDate, size =
         lg: 'w-6 h-6',
     };
 
+    const dateString = verificationDate ? new Date(verificationDate).toLocaleDateString() : '';
+
     return (
-        <div className="inline-flex items-center gap-1" title={`Verified ${verificationDate ? `on ${new Date(verificationDate).toLocaleDateString()}` : ''}`}>
+        <div className="inline-flex items-center gap-1" title={`Verified ${dateString ? `on ${dateString}` : ''}`}>
             <svg
                 className={`${sizeClasses[size]} text-blue-500`}
                 fill="currentColor"

@@ -62,7 +62,7 @@ export function getBadgeInfo(type: string) {
 }
 
 export function checkBadgeEligibility(type: string, stats: any): boolean {
-    const criteria = BADGE_CRITERIA[type as keyof typeof BADGE_CRITERIA];
+    const criteria = BADGE_CRITERIA[type as keyof typeof BADGE_CRITERIA] as any;
 
     if (!criteria) return false;
 

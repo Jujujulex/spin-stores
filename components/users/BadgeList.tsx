@@ -6,7 +6,7 @@ interface BadgeListProps {
     badges: Array<{
         id: string;
         type: string;
-        earnedAt: string;
+        earnedAt: string | Date;
         description: string;
     }>;
 }
