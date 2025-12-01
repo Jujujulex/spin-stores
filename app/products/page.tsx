@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import ProductGrid from '@/components/products/ProductGrid';
 import CategoryFilter from '@/components/products/CategoryFilter';
 import PriceRangeFilter from '@/components/products/PriceRangeFilter';
-import ConditionFilter from '@/components/products/ConditionFilter';
+import { ConditionFilter, SortSelect } from '@/components/products/ConditionFilter';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function ProductsPage() {
@@ -16,8 +16,8 @@ export default function ProductsPage() {
 
     // Filter states
     const [search, setSearch] = useState(searchParams.get('search') || '');
-    const [category, setCategory] = useState(searchParams.get('category') || '');
-    const [subcategory, setSubcategory] = useState(searchParams.get('subcategory') || '');
+    const [category, setCategory] = useState(searchParams.get('category') || null);
+    const [subcategory, setSubcategory] = useState(searchParams.get('subcategory') || null);
     const [minPrice, setMinPrice] = useState(Number(searchParams.get('minPrice')) || 0);
     const [maxPrice, setMaxPrice] = useState(Number(searchParams.get('maxPrice')) || 10000);
     const [conditions, setConditions] = useState<string[]>(
@@ -51,9 +51,9 @@ export default function ProductsPage() {
         }
     };
 
-    const handleCategoryChange = (cat: string, sub: string) => {
+    const handleCategoryChange = (cat: string | null) => {
         setCategory(cat);
-        setSubcategory(sub);
+        setSubcategory(null); // Reset subcategory when category changes
     };
 
     const handlePriceChange = (min: number, max: number) => {
@@ -84,33 +84,26 @@ export default function ProductsPage() {
                     {/* Sidebar Filters */}
                     <div className={`md:w-64 space-y-6 ${showFilters ? 'block' : 'hidden md:block'}`}>
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                            <h3 className="font-semibold mb-4">Categories</h3>
-                            <CategoryFilter
-                                selectedCategory={category}
-                                selectedSubcategory={subcategory}
-                                onChange={handleCategoryChange}
-                            />
+                            <SortSelect sortBy={sortBy} onSortChange={setSortBy} />
                         </div>
 
-                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                            <h3 className="font-semibold mb-4">Price Range</h3>
-                            <PriceRangeFilter
-                                min={0}
-                                max={10000}
-                                currentMin={minPrice}
-                                currentMax={maxPrice}
-                                onChange={handlePriceChange}
-                            />
-                        </div>
+                        <CategoryFilter
+                            selectedCategory={category}
+                            selectedSubcategory={subcategory}
+                            onCategoryChange={handleCategoryChange}
+                            onSubcategoryChange={setSubcategory}
+                        />
 
-                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                            <ConditionFilter
-                                selectedConditions={conditions}
-                                onConditionChange={setConditions}
-                                sortBy={sortBy}
-                                onSortChange={setSortBy}
-                            />
-                        </div>
+                        <PriceRangeFilter
+                            minPrice={0}
+                            maxPrice={10000}
+                            onPriceChange={handlePriceChange}
+                        />
+
+                        <ConditionFilter
+                            selectedConditions={conditions}
+                            onConditionChange={setConditions}
+                        />
                     </div>
 
                     {/* Main Content */}
