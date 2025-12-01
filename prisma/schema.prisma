@@ -34,6 +34,12 @@ model User {
   raisedDisputes Dispute[] @relation("RaisedDisputes")
   resolvedDisputes Dispute[] @relation("ResolvedDisputes")
   disputeMessages DisputeMessage[]
+  
+  // Social Commerce
+  followers     Follow[]        @relation("UserFollowedBy")
+  following     Follow[]        @relation("UserFollows")
+  socialProfiles SocialProfile[]
+  reportsMade   Report[]        @relation("ReportsMade")
 }
 
 model Product {
@@ -52,6 +58,7 @@ model Product {
   updatedAt   DateTime @updatedAt
   orders      Order[]
   wishlistedBy Wishlist[]
+  reports      Report[]
 }
 
 model Order {
@@ -185,4 +192,47 @@ model SellerStats {
   averageShipTime     Int      @default(0) // in hours
   disputeRate         Float    @default(0.0) // percentage
   updatedAt           DateTime @updatedAt
+}
+
+// Phase 3.1: Social Commerce & Trust
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("UserFollows", fields: [followerId], references: [id])
+  followingId String
+  following   User     @relation("UserFollowedBy", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model SocialProfile {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  platform  String   // TWITTER, GITHUB, INSTAGRAM
+  username  String
+  url       String?
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platform])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  reporter    User     @relation("ReportsMade", fields: [reporterId], references: [id])
+  targetType  String   // PRODUCT, USER
+  targetId    String   // ID of the product or user being reported
+  reason      String
+  description String?
+  status      String   @default("PENDING") // PENDING, REVIEWED, DISMISSED, ACTION_TAKEN
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Optional relation if reporting a product directly (for referential integrity)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
 }
