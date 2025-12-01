@@ -12,8 +12,12 @@ model User {
   username      String?   @unique
   bio           String?
   avatar        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())\n  updatedAt     DateTime  @updatedAt
+
+  // Seller Verification fields
+  isVerified       Boolean  @default(false)
+  verificationDate DateTime?
+  trustScore       Float    @default(0.0)
 
   products      Product[]
   buyingOrders  Order[]   @relation("BuyerOrders")
@@ -24,6 +28,11 @@ model User {
   writtenReviews  Review[] @relation("WrittenReviews")
   receivedReviews Review[] @relation("ReceivedReviews")
   wishlist      Wishlist[]
+  badges        Badge[]
+  sellerStats   SellerStats?
+  raisedDisputes Dispute[] @relation("RaisedDisputes")
+  resolvedDisputes Dispute[] @relation("ResolvedDisputes")
+  disputeMessages DisputeMessage[]
 }
 
 model Product {
@@ -33,6 +42,8 @@ model Product {
   price       Float
   images      String[]
   category    String
+  subcategory String?
+  tags        String[]
   condition   String
   sellerId    String
   seller      User     @relation(fields: [sellerId], references: [id])
@@ -58,6 +69,7 @@ model Order {
   messages      Message[]
   transactions  Transaction[]
   review        Review?
+  dispute       Dispute?
 }
 
 model Message {
@@ -121,4 +133,55 @@ model Wishlist {
   createdAt DateTime @default(now())
 
   @@unique([userId, productId])
+}
+
+// Phase 4: Dispute Resolution
+model Dispute {
+  id          String   @id @default(cuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id])
+  raisedBy    String
+  raiser      User     @relation("RaisedDisputes", fields: [raisedBy], references: [id])
+  reason      String
+  description String
+  status      String   // OPEN, IN_REVIEW, RESOLVED, CLOSED
+  resolution  String?
+  resolvedBy  String?
+  resolver    User?    @relation("ResolvedDisputes", fields: [resolvedBy], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  messages    DisputeMessage[]
+}
+
+model DisputeMessage {
+  id         String   @id @default(cuid())
+  disputeId  String
+  dispute    Dispute  @relation(fields: [disputeId], references: [id])
+  senderId   String
+  sender     User     @relation(fields: [senderId], references: [id])
+  message    String
+  createdAt  DateTime @default(now())
+}
+
+// Phase 5: Seller Verification & Badges
+model Badge {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // VERIFIED, TOP_SELLER, FAST_SHIPPER, RESPONSIVE, TRUSTED
+  earnedAt    DateTime @default(now())
+  description String
+}
+
+model SellerStats {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id])
+  totalSales          Int      @default(0)
+  completedOrders     Int      @default(0)
+  averageRating       Float    @default(0.0)
+  averageResponseTime Int      @default(0) // in minutes
+  averageShipTime     Int      @default(0) // in hours
+  disputeRate         Float    @default(0.0) // percentage
+  updatedAt           DateTime @updatedAt
 }
