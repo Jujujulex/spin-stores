@@ -8,6 +8,8 @@ import OrderTimeline from '@/components/orders/OrderTimeline';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BrowserProvider, Contract } from 'ethers';
+import ReviewForm from '@/components/reviews/ReviewForm';
+import ReviewList from '@/components/reviews/ReviewList';
 
 export default function OrderDetailPage() {
     const params = useParams();
@@ -182,6 +184,29 @@ export default function OrderDetailPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Reviews Section */}
+                {order.status === 'COMPLETED' && (
+                    <div className="mb-8 space-y-8">
+                        {isBuyer && !order.review && (
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h2 className="text-lg font-semibold mb-4">Leave a Review</h2>
+                                <ReviewForm
+                                    orderId={order.id}
+                                    targetUserId={order.sellerId}
+                                    onSuccess={fetchOrder}
+                                />
+                            </div>
+                        )}
+
+                        {order.review && (
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h2 className="text-lg font-semibold mb-4">Review</h2>
+                                <ReviewList reviews={[order.review]} />
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Product Details */}

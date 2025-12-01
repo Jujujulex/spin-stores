@@ -2,6 +2,7 @@ import { Product } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
+import WishlistButton from './WishlistButton';
 
 interface ProductCardProps {
     product: Product & {
@@ -37,6 +38,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                             {product.condition.toUpperCase()}
                         </div>
                     )}
+                    <div className="absolute top-2 left-2">
+                        <WishlistButton productId={product.id} initialIsWishlisted={false} />
+                    </div>
                 </div>
 
                 <div className="p-4">
