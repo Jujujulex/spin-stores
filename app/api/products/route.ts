@@ -23,23 +23,58 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const category = searchParams.get('category');
+        const subcategory = searchParams.get('subcategory');
+        const tags = searchParams.get('tags')?.split(',').filter(Boolean);
+        const conditions = searchParams.get('conditions')?.split(',').filter(Boolean);
         const minPrice = searchParams.get('minPrice');
         const maxPrice = searchParams.get('maxPrice');
         const search = searchParams.get('search');
+        const sortBy = searchParams.get('sortBy') || 'newest';
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '20');
         const skip = (page - 1) * limit;
 
         const where: any = {};
 
+        // Category filters
         if (category) where.category = category;
+        if (subcategory) where.subcategory = subcategory;
+        if (tags && tags.length > 0) {
+            where.tags = { hasSome: tags };
+        }
+
+        // Condition filter
+        if (conditions && conditions.length > 0) {
+            where.condition = { in: conditions };
+        }
+
+        // Price range filter
         if (minPrice) where.price = { ...where.price, gte: parseFloat(minPrice) };
         if (maxPrice) where.price = { ...where.price, lte: parseFloat(maxPrice) };
+
+        // Search filter
         if (search) {
             where.OR = [
                 { title: { contains: search, mode: 'insensitive' } },
                 { description: { contains: search, mode: 'insensitive' } },
             ];
+        }
+
+        // Sort options
+        let orderBy: any = { createdAt: 'desc' }; // default: newest
+        switch (sortBy) {
+            case 'price-low':
+                orderBy = { price: 'asc' };
+                break;
+            case 'price-high':
+                orderBy = { price: 'desc' };
+                break;
+            case 'most-liked':
+                orderBy = { wishlistedBy: { _count: 'desc' } };
+                break;
+            case 'newest':
+            default:
+                orderBy = { createdAt: 'desc' };
         }
 
         const [products, total] = await Promise.all([
@@ -52,10 +87,17 @@ export async function GET(request: NextRequest) {
                             username: true,
                             walletAddress: true,
                             avatar: true,
+                            isVerified: true,
+                            trustScore: true,
+                        },
+                    },
+                    _count: {
+                        select: {
+                            wishlistedBy: true,
                         },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy,
                 skip,
                 take: limit,
             }),
