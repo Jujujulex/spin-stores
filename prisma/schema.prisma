@@ -19,6 +19,9 @@ model User {
   isVerified       Boolean  @default(false)
   verificationDate DateTime?
   trustScore       Float    @default(0.0)
+  
+  // User Preferences
+  theme            String?  @default("system") // "light", "dark", "system"
 
   products      Product[]
   buyingOrders  Order[]   @relation("BuyerOrders")
