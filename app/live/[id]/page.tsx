@@ -88,7 +88,7 @@ export default async function LivestreamViewerPage({ params }: { params: { id: s
                             </div>
 
                             <div className="space-y-4">
-                                {stream.products.map((item) => (
+                                {stream.products.map((item: any) => (
                                     <div
                                         key={item.id}
                                         className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors cursor-pointer"
