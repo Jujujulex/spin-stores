@@ -49,6 +49,7 @@ model User {
   pointTransactions    PointTransaction[]
   referralCode         ReferralCode?
   leaderboardSnapshots LeaderboardSnapshot[]
+  livestreams          LiveStream[]
 }
 
 model Product {
@@ -72,6 +73,9 @@ model Product {
   orders      Order[]
   wishlistedBy Wishlist[]
   reports      Report[]
+  
+  // Live Shopping
+  livestreamProducts LiveStreamProduct[]
 }
 
 model Order {
@@ -297,4 +301,31 @@ model LeaderboardSnapshot {
   createdAt   DateTime @default(now())
 
   @@unique([userId, period, type, createdAt])
+}
+
+// Phase 3.6: Live Shopping MVP
+model LiveStream {
+  id          String   @id @default(cuid())
+  hostId      String
+  host        User     @relation(fields: [hostId], references: [id])
+  title       String
+  description String?
+  streamUrl   String?
+  isLive      Boolean  @default(false)
+  viewerCount Int      @default(0)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+  
+  products    LiveStreamProduct[]
+}
+
+model LiveStreamProduct {
+  id           String     @id @default(cuid())
+  streamId     String
+  stream       LiveStream @relation(fields: [streamId], references: [id])
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  featured     Boolean    @default(false)
+  addedAt      DateTime   @default(now())
 }
