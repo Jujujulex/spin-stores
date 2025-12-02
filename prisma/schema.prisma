@@ -44,6 +44,11 @@ model User {
   socialProfiles SocialProfile[]
   reportsMade   Report[]        @relation("ReportsMade")
   savedSearches SavedSearch[]
+  
+  // Gamification
+  pointTransactions    PointTransaction[]
+  referralCode         ReferralCode?
+  leaderboardSnapshots LeaderboardSnapshot[]
 }
 
 model Product {
@@ -254,4 +259,38 @@ model SavedSearch {
   condition   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Phase 3.3: Gamification & Loyalty
+model PointTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Int
+  type        String   // EARN, SPEND, BONUS
+  source      String   // PURCHASE, SALE, REFERRAL, BADGE, etc.
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model ReferralCode {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  code        String   @unique
+  uses        Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model LeaderboardSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  period      String   // WEEKLY, MONTHLY, ALL_TIME
+  type        String   // SELLER, BUYER, POINTS
+  rank        Int
+  value       Float    // sales count, purchase count, or points
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, period, type, createdAt])
 }
