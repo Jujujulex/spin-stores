@@ -43,6 +43,7 @@ model User {
   following     Follow[]        @relation("UserFollows")
   socialProfiles SocialProfile[]
   reportsMade   Report[]        @relation("ReportsMade")
+  savedSearches SavedSearch[]
 }
 
 model Product {
@@ -238,4 +239,19 @@ model Report {
   // Optional relation if reporting a product directly (for referential integrity)
   productId   String?
   product     Product? @relation(fields: [productId], references: [id])
+}
+
+// Phase 3.2: User Experience & Engagement
+model SavedSearch {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  query       String?
+  category    String?
+  minPrice    Float?
+  maxPrice    Float?
+  condition   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
