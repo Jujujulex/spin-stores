@@ -61,10 +61,14 @@ model Product {
   subcategory String?
   tags        String[]
   condition   String
+  location    String?
   sellerId    String
   seller      User     @relation(fields: [sellerId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  // Multi-currency support (Phase 3.5)
+  paymentToken String?  @default("ETH") // ETH, USDC, USDT, DAI, etc.
   orders      Order[]
   wishlistedBy Wishlist[]
   reports      Report[]
